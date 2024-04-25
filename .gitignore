@@ -1,0 +1,10 @@
+GSM461177_1_subsampled.fastqsanger
+GSM461177_2_subsampled.fastqsanger
+Drosophila_melanogaster.BDGP6.87.gtf
+
+dm6-STAR-index.tar.xz
+dm6-STAR-index
+
+cachedir*
+provenance
+output_*

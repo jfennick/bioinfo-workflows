@@ -1,0 +1,20 @@
+# from https://zenodo.org/records/4541751
+# or   http://sasc3i.univ-ag.fr:8080/library/folders/F33b43b4e7093c91f
+
+rna_reads_fruitfly_forward:
+  class: File
+  location: ../data/GSM461177_1_subsampled.fastqsanger
+  format: http://edamontology.org/format_1930  # FASTQ
+rna_reads_fruitfly_reverse:
+  class: File
+  location: ../data/GSM461177_2_subsampled.fastqsanger
+  format: http://edamontology.org/format_1930  # FASTQ
+fruitfly_gene_model:
+  class: File
+  location: ../data/Drosophila_melanogaster.BDGP6.87.gtf
+
+# from https://dataverse.nl/dataset.xhtml?persistentId=doi:10.34894/IPNZXK
+
+ref_fruitfly_genome:
+  class: Directory
+  location: ../data/dm6-STAR-index
