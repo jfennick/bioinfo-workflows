@@ -1,0 +1,64 @@
+# https://carpentries-incubator.github.io/cwl-novice-tutorial/03-dependency_graphs/index.html
+cwlVersion: v1.2
+class: Workflow
+
+inputs:
+  rna_reads_fruitfly_forward:
+    type: File
+    format: http://edamontology.org/format_1930  # FASTQ
+  rna_reads_fruitfly_reverse:
+    type: File
+    format: http://edamontology.org/format_1930  # FASTQ
+  ref_fruitfly_genome: Directory
+  fruitfly_gene_model: File
+
+steps:
+- id: quality_control_forward
+  run: ../../bio-cwl-tools/fastqc/fastqc_2.cwl
+  in:
+    reads_file: rna_reads_fruitfly_forward
+
+- id: quality_control_reverse
+  requirements:
+    ResourceRequirement:
+      ramMin: 1024
+  run: ../../bio-cwl-tools/fastqc/fastqc_2.cwl
+  in:
+    reads_file: rna_reads_fruitfly_reverse
+
+- id: trim_low_quality_bases
+  run: ../../bio-cwl-tools/cutadapt/cutadapt-paired.cwl
+  in:
+    reads_1: rna_reads_fruitfly_forward
+    reads_2: rna_reads_fruitfly_reverse
+    minimum_length: { default: 20 }
+    quality_cutoff: { default: 20 }
+  # All outputs: from each CommandLineTool are automatically added to each out: tag.
+  # No need to explicitly list report!
+  out: [ trimmed_reads_1: !& trimmed_reads_1, trimmed_reads_2: !& trimmed_reads_2 ]
+
+- id: mapping_reads
+  requirements:
+    ResourceRequirement:
+      ramMin: 5120
+  run: ../../bio-cwl-tools/STAR/STAR-Align.cwl
+  in:
+    RunThreadN: {default: 4}
+    GenomeDir: ref_fruitfly_genome
+    ForwardReads: !* trimmed_reads_1
+    ReverseReads: !* trimmed_reads_2
+    OutSAMtype: {default: BAM}
+    SortedByCoordinate: {default: true}
+    OutSAMunmapped: {default: Within}
+    Overhang: { default: 36 }  # the length of the reads - 1
+    Gtf: fruitfly_gene_model
+  out: [alignment: !& alignment]
+
+- id: index_alignment
+  run: ../../bio-cwl-tools/samtools/samtools_index.cwl
+  in:
+    bam_sorted: !* alignment
+
+# All out: tags are automatically added to the workflow outputs: tag.
+# (i.e. due to the above comment, all outputs: from all CLTs are output from the workflow)
+# Notice: now there are no more references to the step id: tags

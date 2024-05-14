@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+		"redhat.vscode-yaml",
+		"sbg-rabix.benten-cwl",
+		"ms-vscode.live-server"
+	]
+}

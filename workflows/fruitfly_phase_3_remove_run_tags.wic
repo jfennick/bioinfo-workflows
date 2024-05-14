@@ -1,0 +1,61 @@
+# https://carpentries-incubator.github.io/cwl-novice-tutorial/03-dependency_graphs/index.html
+cwlVersion: v1.2
+class: Workflow
+
+inputs:
+  rna_reads_fruitfly_forward:
+    type: File
+    format: http://edamontology.org/format_1930  # FASTQ
+  rna_reads_fruitfly_reverse:
+    type: File
+    format: http://edamontology.org/format_1930  # FASTQ
+  ref_fruitfly_genome: Directory
+  fruitfly_gene_model: File
+
+# One of the main design goals of WIC is to improve portability by
+# abstracting away the system-dependent paths inherent in the run: tags.
+# Instead, there is a separate, external auto-discovery mechanism.
+# https://github.com/PolusAI/workflow-inference-compiler/blob/master/docs/userguide.md#auto-discovery
+
+steps:
+# NOTE: fast_qc_2 used twice. WIC will automatically rename all step ids.
+# See https://github.com/PolusAI/workflow-inference-compiler/blob/master/docs/dev/algorithms.md#namespacing
+
+- id: fastqc_2  # See above
+  in:
+    reads_file: rna_reads_fruitfly_forward
+
+- id: fastqc_2  # See above
+  requirements:
+    ResourceRequirement:
+      ramMin: 1024
+  in:
+    reads_file: rna_reads_fruitfly_reverse
+
+- id: cutadapt-paired
+  in:
+    reads_1: rna_reads_fruitfly_forward
+    reads_2: rna_reads_fruitfly_reverse
+    minimum_length: { default: 20 }
+    quality_cutoff: { default: 20 }
+  out: [ trimmed_reads_1: !& trimmed_reads_1, trimmed_reads_2: !& trimmed_reads_2 ]
+
+- id: STAR-Align
+  requirements:
+    ResourceRequirement:
+      ramMin: 5120
+  in:
+    RunThreadN: {default: 4}
+    GenomeDir: ref_fruitfly_genome
+    ForwardReads: !* trimmed_reads_1
+    ReverseReads: !* trimmed_reads_2
+    OutSAMtype: {default: BAM}
+    SortedByCoordinate: {default: true}
+    OutSAMunmapped: {default: Within}
+    Overhang: { default: 36 }  # the length of the reads - 1
+    Gtf: fruitfly_gene_model
+  out: [alignment: !& alignment]
+
+- id: samtools_index
+  in:
+    bam_sorted: !* alignment

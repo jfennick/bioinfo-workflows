@@ -1,0 +1,14 @@
+steps:
+# NOTE: fast_qc_2 used twice. WIC will automatically rename all step ids.
+# See https://github.com/PolusAI/workflow-inference-compiler/blob/master/docs/dev/algorithms.md#namespacing
+
+- id: fastqc_2  # See above
+  in:
+    reads_file: !ii ../data/GSM461177_1_subsampled.fastqsanger
+
+- id: fastqc_2  # See above
+  requirements:
+    ResourceRequirement:
+      ramMin: 1024
+  in:
+    reads_file: !ii ../data/GSM461177_2_subsampled.fastqsanger

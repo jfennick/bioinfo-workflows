@@ -1,0 +1,38 @@
+# https://carpentries-incubator.github.io/cwl-novice-tutorial/03-dependency_graphs/index.html
+cwlVersion: v1.2
+class: Workflow
+
+steps:
+- id: fastqc_2_fwd_rev.wic
+
+- id: cutadapt-paired
+  in:
+    reads_1: !ii ../data/GSM461177_1_subsampled.fastqsanger
+    reads_2: !ii ../data/GSM461177_2_subsampled.fastqsanger
+    minimum_length: !ii 20
+    quality_cutoff: !ii 20
+  out: [ trimmed_reads_1: !& trimmed_reads_1, trimmed_reads_2: !& trimmed_reads_2 ]
+
+- id: STAR-Align
+  requirements:
+    ResourceRequirement:
+      ramMin: 5120
+  in:
+    RunThreadN: !ii 4
+    GenomeDir: !ii ../data/dm6-STAR-index
+    ForwardReads: !* trimmed_reads_1
+    ReverseReads: !* trimmed_reads_2
+    OutSAMtype: !ii BAM
+    SortedByCoordinate: !ii true
+    OutSAMunmapped: !ii Within
+    Overhang: !ii 36  # the length of the reads - 1
+    Gtf: !ii ../data/Drosophila_melanogaster.BDGP6.87.gtf
+
+- id: samtools_index
+  # NOTICE: There is no in: tag! Using type: and/or format: information,
+  # WIC automatically infers that the bam_sorted input should come from the previous step. See
+  # https://github.com/PolusAI/workflow-inference-compiler/blob/master/docs/userguide.md#edge-inference-algorithm
+
+  # Also note that trimmed_reads_1 and trimmed_reads_2 have the exact same type: and format:
+  # so (by default) we cannot use inference in this case. See
+  # https://github.com/PolusAI/workflow-inference-compiler/blob/master/docs/tutorials/naming_conventions.md
